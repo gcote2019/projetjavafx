@@ -11,6 +11,18 @@ repositories {
     mavenCentral()
 }
 
+tasks {
+    javadoc {
+        options.encoding = "UTF-8"
+    }
+    compileJava {
+        options.encoding = "UTF-8"
+    }
+    compileTestJava {
+        options.encoding = "UTF-8"
+    }
+}
+
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -28,3 +40,10 @@ javafx {
 application {
     mainClass.set("ca.qc.bdeb.sim203.projetjavafx.Main")
 }
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
+
+
+

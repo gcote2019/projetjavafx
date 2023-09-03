@@ -4,10 +4,12 @@ import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -17,216 +19,296 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Scanner;
 
 
 public class Main extends Application {
+    private final static String[] TEXTE_BOUTONS = {"Gauche", "Centre", "Droite"};
+    private final static String[] NOM_DES_CLASSES = {"javafx.scene.text.Text", "javafx.scene.control.Button"};
+    private final static String[] TEXTE_DANS_ELEMENT = {"Ligne", "Bouton"};
+    private Class[] classes = new Class[NOM_DES_CLASSES.length];
+    private final static TypeClasse[] TYPE_CLASSES = {TypeClasse.TEXT, TypeClasse.BUTTON};
+    private boolean initClassesFait = false;
+
+
+    // Pour pouvoir utiliser un scanner dans un projet gradle, voir la modification dans
+    // build.gradle.kts pour standardInput
+    private Scanner clavier = new Scanner(System.in);
+
+
     public static void main(String[] args) { launch(args); }
-    private void exemple1(Stage stage) {
-        VBox root = new VBox();
-        root.setAlignment(Pos.CENTER);
-        Scene scene = new Scene(root, 400, 150);
-        root.getChildren().add(new Text("Ceci n'est pas un titre"));
-        root.getChildren().add(new Separator());
-        HBox hBox = new HBox();
-        hBox.setAlignment(Pos.CENTER);
-        Button boutonGauche = new Button();
-        boutonGauche.setText("Gauche");
-        Button boutonCentre = new Button();
-        boutonCentre.setText("Centre");
-        Button boutonDroite = new Button();
-        boutonDroite.setText("Droite");
-        hBox.getChildren().add(boutonGauche);
-        hBox.getChildren().add(boutonCentre);
-        hBox.getChildren().add(boutonDroite);
-        root.getChildren().add(hBox);
-        root.getChildren().add(new Separator());
-        CheckBox checkBox = new CheckBox();
-        checkBox.setText("Voulez-vous cocher cette case?");
-        checkBox.setSelected(true);
-        root.getChildren().add(checkBox);
-        root.setSpacing(10);
-        stage.setTitle("Super titre!");
-        stage.setScene(scene);
-        stage.show();
+
+    private void initClasses() {
+        for (int i = 0; i < NOM_DES_CLASSES.length; i++) {
+            try {
+                classes[i] = Class.forName(NOM_DES_CLASSES[i]);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    private void exemple2(Stage stage) {
-        VBox root = new VBox();
+    private Node creerNode(TypeClasse type, String texte) {
+        if (!initClassesFait) {
+            initClasses();
+            initClassesFait = true;
+        }
+        Node node = null;
+        if (classes[type.indice] != null) {
+            try {
+                // on va chercher le constructeur qui prend une String comme argument
+                node = (Node) classes[type.indice].getConstructor(String.class).newInstance(texte);
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return node;
+    }
+
+    private void exemple1(Stage fenetrePrinciple, Integer position) {
+        
+        VBox root = Boite.creerVBox();
+        root.setAlignment(Pos.CENTER);
+        Scene scene = new Scene(root, 400, 150);
+        Boite.ajouter(root, new Text("Ceci n'est pas un titre"));
+        Boite.ajouter(root, new Separator());
+
+        HBox hBox = Boite.creerHBox();
+        hBox.setAlignment(Pos.CENTER);
+        for (int i = 0; i < TEXTE_BOUTONS.length; i++) {
+            Boite.ajouter(hBox, new Button(TEXTE_BOUTONS[i]));
+        }
+        Boite.ajouter(root, hBox);
+        Boite.ajouter(root, new Separator());
+
+        CheckBox checkBox = new CheckBox();
+        checkBox.setText("Voulez-vous cocher cette case?");
+        // il est s√©lectionn√©
+        checkBox.setSelected(true);
+        Boite.ajouter(root, checkBox);
+        root.setSpacing(10);
+        Fenetre.creer(scene, position*10, position*10,  "Super titre!");
+    }
+
+    private void exemple2(Stage fenetrePrinciple, Integer position) {
+        
+        VBox root = Boite.creerVBox();
 
         Scene scene = new Scene(root, 400, 500);
         for (int i = 0; i < 30; i++) {
-            root.getChildren().add(new Text("Ligne numÈro " + (i+1)));
+            Boite.ajouter(root, new Text("Ligne num√©ro " + (i+1)));
         }
-        stage.setTitle("Beaucoup de texte");
-        stage.setScene(scene);
-        stage.show();
+        Fenetre.creer(scene, position*10, position*10,  "Beaucoup de texte");
+
     }
 
-    private void exemple3(Stage stage) {
-        HBox root = new HBox();
+    private void exemple3(Stage fenetrePrinciple, Integer position) {
+        
+        HBox root = Boite.creerHBox();
 
         Scene scene = new Scene(root, 300, 400);
         root.setAlignment(Pos.CENTER);
-        VBox[] vboxes = new VBox[2];
-        for (int i = 0; i < vboxes.length; i++) {
-            vboxes[i] = new VBox();
-            root.getChildren().add(vboxes[i]);
-            if (i == 0) {
-                for (int j = 0; j < 15; j++) {
-                    vboxes[i].getChildren().add(new Text("Ligne numÈro " + (j + 1)));
-                }
-            } else {
-                for (int j = 0; j < 15; j++) {
-                    Button bouton = new Button();
-                    bouton.setText("Bouton numÈro " + (j + 1));
-                    vboxes[i].getChildren().add(bouton);
-
-                }
+        root.setSpacing(10);
+        VBox[] vBoxes = new VBox[2];
+        for (int i = 0; i < vBoxes.length; i++) {
+            vBoxes[i] = new VBox();
+            Boite.ajouter(root, vBoxes[i]);
+            for (int j = 0; j < 15; j++) {
+                Boite.ajouter(vBoxes[i], creerNode(TypeClasse.TEXT, "Ligne num√©ro " + (j + 1)));
             }
-
         }
-        stage.setTitle("Beaucoup de choses");
-        stage.setScene(scene);
-        stage.show();
+        Fenetre.creer(scene, position*10, position*10,  "Beaucoup de choses");
     }
 
-    private void exemple4(Stage stage) {
-        VBox root = new VBox();
+    private void exemple4(Stage fenetrePrinciple, Integer position) {
+        
+        VBox root = Boite.creerVBox();
 
         Scene scene = new Scene(root, 400, 500);
         root.setAlignment(Pos.BOTTOM_CENTER);
         root.setSpacing(10);
         for (int i = 0; i < 15; i++) {
-            Text texte = new Text("Ligne numÈro " + (i+1));
+            Text texte = new Text("Ligne num√©ro " + (i+1));
             if (i % 2 == 0) {
-                Font police = Font.getDefault();
-                Font nouvellePolice = Font.font(police.getFamily(), FontWeight.BOLD, FontPosture.ITALIC, police.getSize());
-                texte.setFont(nouvellePolice);
+                // comment faire en gras et en italique
+                texte.setFont(creerPolice(true, true));
+                // changer la couleur
                 texte.setFill(Color.RED);
             }
-            root.getChildren().add(texte);
+            Boite.ajouter(root, texte);
         }
-        stage.setTitle("Textes diffÈrents");
-        stage.setScene(scene);
-        stage.show();
+        Fenetre.creer(scene, position*10, position*10,  "Textes diff√©rents");
     }
 
-    private void exemple5(Stage stage) {
-        VBox root = new VBox();
+    private void exemple5(Stage fenetrePrinciple, Integer position) {
+        
+        VBox root = Boite.creerVBox();
         root.setAlignment(Pos.CENTER);
         Scene scene = new Scene(root, 400, 150);
-        root.getChildren().add(new Text("Ceci n'est pas un titre"));
-        root.getChildren().add(new Separator());
-        HBox hBox = new HBox();
+        Boite.ajouter(root, new Text("Ceci n'est pas un titre"));
+        Boite.ajouter(root, new Separator());
+
+        HBox hBox = Boite.creerHBox();
         hBox.setAlignment(Pos.CENTER);
         hBox.setSpacing(10);
-        Button boutonGauche = new Button();
-        boutonGauche.setText("Gauche");
         //-fx-border-width
         //-fx-border-color
         //-fx-background-color
         //-fx-font-size
         //-fx-text-fill
-        boutonGauche.setStyle("-fx-background-color: #ff0000; ");
-        Button boutonCentre = new Button();
-        boutonCentre.setText("Centre");
-        boutonCentre.setStyle("-fx-border-color : #0000ff;-fx-border-width : 10; -fx-text-fill : #ff00ff;");
-        Button boutonDroite = new Button();
-        boutonDroite.setText("Droite");
-        hBox.getChildren().add(boutonGauche);
-        hBox.getChildren().add(boutonCentre);
-        hBox.getChildren().add(boutonDroite);
-        root.getChildren().add(hBox);
-        root.getChildren().add(new Separator());
+        // #ff0000 --> RGB en hexad√©cimal
+        String[] styles = {"-fx-background-color: #ff0000; ", "-fx-border-color : #0000ff;-fx-border-width : 10; -fx-text-fill : #ff00ff;", ""};
+        for (int i = 0; i < TEXTE_BOUTONS.length; i++) {
+            Button bouton = new Button(TEXTE_BOUTONS[i]);
+            Boite.ajouter(hBox, bouton);
+            if (!styles[i].isEmpty()) {
+                bouton.setStyle(styles[i]);
+            }
+        }
+        Boite.ajouter(root, hBox);
+        Boite.ajouter(root, new Separator());
+
         CheckBox checkBox = new CheckBox();
         checkBox.setText("Voulez-vous cocher cette case?");
         checkBox.setSelected(true);
-        root.getChildren().add(checkBox);
+
+        Boite.ajouter(root, checkBox);
         root.setSpacing(10);
-        stage.setTitle("Super titre!");
-        stage.setScene(scene);
-        stage.show();
+        Fenetre.creer(scene, position*10, position*10,  "Super titre!");
     }
 
-    private void exemple6(Stage stage) {
-        VBox root = new VBox();
+    private Font creerPolice(boolean gras, boolean italique) {
+        Font police = Font.getDefault();
+        return Font.font(police.getFamily(),
+                gras ? FontWeight.BOLD : FontWeight.NORMAL,
+                italique ? FontPosture.ITALIC : FontPosture.REGULAR, police.getSize());
+
+    }
+
+    private void exemple6(Stage fenetrePrinciple, Integer position) {
+        
+        VBox root = Boite.creerVBox();
 
         Scene scene = new Scene(root, 400, 500);
         root.setAlignment(Pos.BOTTOM_CENTER);
         root.setSpacing(10);
         for (int i = 0; i < 15; i++) {
-            Text texte = new Text("Ligne numÈro " + (i+1));
+            Text texte = new Text("Ligne num√©ro " + (i+1));
             if (i % 2 == 0) {
-                Font police = Font.getDefault();
-                Font nouvellePolice = Font.font(police.getFamily(), FontWeight.BOLD, FontPosture.ITALIC, police.getSize());
-                texte.setFont(nouvellePolice);
+                texte.setFont(creerPolice(true, true));
                 texte.setFill(Color.RED);
             }
-            root.getChildren().add(texte);
+            Boite.ajouter(root, texte);
         }
         root.setStyle("-fx-border-color : #0000ff;");
-        stage.setTitle("Textes diffÈrents");
-        stage.setScene(scene);
-        stage.show();
+        Fenetre.creer(scene, position*10, position*10,  "Textes diff√©rents");
     }
 
-    private void exemple7(Stage stage) {
-        HBox root = new HBox();
+    private void exemple7(Stage fenetrePrinciple, Integer position) {
+        
+        HBox root = Boite.creerHBox();
 
         Scene scene = new Scene(root, 300, 400);
         root.setAlignment(Pos.CENTER);
-        VBox[] vboxes = new VBox[2];
-        for (int i = 0; i < vboxes.length; i++) {
-            vboxes[i] = new VBox();
-            vboxes[i].setStyle("-fx-border-color : #0000ff;");
-            root.getChildren().add(vboxes[i]);
-            if (i == 0) {
-                for (int j = 0; j < 15; j++) {
-                    if (j % 2 == 0) {
-                        vboxes[i].getChildren().add(new Label("Ligne numÈro " + (j + 1)));
-                    } else {
-                        vboxes[i].getChildren().add(new Text("Ligne numÈro " + (j + 1)));
-                    }
-                }
-            } else {
-                for (int j = 0; j < 15; j++) {
-                    Button bouton = new Button();
-                    bouton.setText("Bouton numÈro " + (j + 1));
-                    vboxes[i].getChildren().add(bouton);
+        VBox[] vBoxes = new VBox[2];
+        // On va chercher la classe "Text" et "Button"
+        for (int i = 0; i < vBoxes.length; i++) {
+            vBoxes[i] = new VBox();
+            vBoxes[i].setStyle("-fx-border-color : #0000ff;");
+            Boite.ajouter(root, vBoxes[i]);
 
-                }
+            for (int j = 0; j < 15; j++) {
+                Boite.ajouter(vBoxes[i], creerNode(TYPE_CLASSES[i], TEXTE_DANS_ELEMENT[i] + " num√©ro " + (j + 1)));
             }
-
         }
 
         Image image = new Image("mario-droite.png");
         ImageView imageView = new ImageView(image);
-        //root.getChildren().add(imageView);
+
         Button bouton = new Button("Mario");
         bouton.setGraphic(imageView);
         bouton.setContentDisplay(ContentDisplay.TOP);
-        root.getChildren().add(bouton);
+        Boite.ajouter(root, bouton);
+
+
+        // si on regarde setOnAction, on voit que la signature est
+        // public final void setOnAction(EventHandler<ActionEvent> value)
+        // et
+        // public interface EventHandler<T extends Event> extends EventListener {
+        //
+        // 1-On peut se d√©finir une classe qui impl√©mente cette interface
 
         bouton.setOnAction(new MonEventHandler());
+
+        //
+        // 2-On peut se d√©fnir une classe anonyme
         EventHandler<ActionEvent> evenement = new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                System.out.println("On a cliquÈ sur Mario");
+                System.out.println("On a cliqu√© sur Mario");
             }
         };
         bouton.setOnAction(evenement);
+        //
+        // 3-lambda
         bouton.setOnAction((event) -> {
 
             System.out.println("Mario!");
         });
 
-        stage.setTitle("Beaucoup de choses");
-        stage.setScene(scene);
-        stage.setFullScreen(true);
-        stage.show();
+        Fenetre.creer(scene, position*10, position*10,  "Beaucoup de choses");
+
+    }
+
+
+    private int lireNombre(int min, int max) {
+        int nombre = min - 1;
+        do {
+            System.out.print("Choisir un exemple entre " + min + " et " + max + " svp ");
+            try {
+                nombre = clavier.nextInt();
+            } catch (NumberFormatException e) {
+
+            }
+
+            if (nombre < min || nombre > max) {
+                System.out.println("SVP entrez un nombre entre " + min + " et " + max);
+            }
+        } while (nombre < min || nombre > max);
+        return  nombre;
+
     }
     @Override
-    public void start(Stage stage) {
-        exemple7(stage);
+    public void start(Stage fenetrePrinciple) {
+        //int choix = lireNombre(1, 7);
+
+        fenetrePrinciple.setTitle("Les exemples");
+        fenetrePrinciple.show();
+        for (int i = 1; i <= 7; i++) {
+            Method methode = null;
+            try {
+                // ceci est une fa√ßon d'aller chercher une m√©thode
+                // getMethod si publique
+                // getDeclaredMethod sinon
+                methode = Main.class.getDeclaredMethod("exemple" + i, Stage.class, Integer.class);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                methode.invoke(this, fenetrePrinciple, i);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
